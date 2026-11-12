@@ -508,10 +508,329 @@ db.patients.find({ patientId: 7 }).explain("executionStats")
 
 
 
+5
+use LibraryDB
+
+//Books Collection
+db.createCollection("books", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["isbn", "title", "authorId", "publishedYear", "copiesAvailable"],
+            properties: {
+                isbn: { bsonType: "string", description: "must be a string and unique" },
+                title: { bsonType: "string" },
+                authorId: { bsonType: "int" },
+                publishedYear: { bsonType: "int", minimum: 1500, maximum: 2025 },
+                copiesAvailable: { bsonType: "int", minimum: 0 }
+            }
+        }
+    }
+})
+
+//Members Collection
+db.createCollection("members", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["memberId", "name", "age", "membershipType"],
+            properties: {
+                memberId: { bsonType: "int" },
+                name: { bsonType: "string" },
+                age: { bsonType: "int", minimum: 5, maximum: 100 },
+                membershipType: { enum: ["Standard", "Premium", "Student"] }
+            }
+        }
+    }
+})
+
+//Borrow Records
+db.createCollection("borrowRecords", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["recordId", "memberId", "isbn", "borrowDate", "returnDate"],
+            properties: {
+                recordId: { bsonType: "int" },
+                memberId: { bsonType: "int" },
+                isbn: { bsonType: "string" },
+                borrowDate: { bsonType: "date" },
+                returnDate: { bsonType: "date" }
+            }
+        }
+    }
+})
+
+//Authors Collection
+db.createCollection("authors", {
+    validator: {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["authorId", "name", "country"],
+            properties: {
+                authorId: { bsonType: "int" },
+                name: { bsonType: "string" },
+                country: { bsonType: "string" }
+            }
+        }
+    }
+})
+
+db.books.insertMany([
+    { isbn: "B001", title: "MongoDB Basics", authorId: 1, publishedYear: 2020, copiesAvailable: 5 },
+    { isbn: "B002", title: "Node.js in Action", authorId: 2, publishedYear: 2019, copiesAvailable: 3 },
+    { isbn: "B003", title: "Python Programming", authorId: 3, publishedYear: 2021, copiesAvailable: 7 },
+    { isbn: "B004", title: "Java for Beginners", authorId: 4, publishedYear: 2018, copiesAvailable: 4 },
+    { isbn: "B005", title: "Data Structures", authorId: 5, publishedYear: 2022, copiesAvailable: 6 },
+    { isbn: "B006", title: "Algorithms Unlocked", authorId: 5, publishedYear: 2020, copiesAvailable: 2 },
+    { isbn: "B007", title: "Database Systems", authorId: 6, publishedYear: 2017, copiesAvailable: 8 },
+    { isbn: "B008", title: "AI and ML", authorId: 7, publishedYear: 2023, copiesAvailable: 10 },
+    { isbn: "B009", title: "Deep Learning", authorId: 7, publishedYear: 2021, copiesAvailable: 9 },
+    { isbn: "B010", title: "Cloud Computing", authorId: 8, publishedYear: 2019, copiesAvailable: 4 }
+])
+
+db.members.insertMany([
+    { memberId: 1, name: "Alice", age: 25, membershipType: "Premium" },
+    { memberId: 2, name: "Bob", age: 32, membershipType: "Standard" },
+    { memberId: 3, name: "Charlie", age: 19, membershipType: "Student" },
+    { memberId: 4, name: "David", age: 45, membershipType: "Premium" },
+    { memberId: 5, name: "Eve", age: 28, membershipType: "Standard" },
+    { memberId: 6, name: "Frank", age: 35, membershipType: "Standard" },
+    { memberId: 7, name: "Grace", age: 22, membershipType: "Student" },
+    { memberId: 8, name: "Helen", age: 29, membershipType: "Premium" },
+    { memberId: 9, name: "Ivy", age: 31, membershipType: "Standard" },
+    { memberId: 10, name: "Jack", age: 27, membershipType: "Premium" }
+])
+
+db.borrowRecords.insertMany([
+    { recordId: 1, memberId: 1, isbn: "B003", borrowDate: new Date("2025-01-10"), returnDate: new Date("2025-01-20") },
+    { recordId: 2, memberId: 3, isbn: "B001", borrowDate: new Date("2025-01-11"), returnDate: new Date("2025-01-21") },
+    { recordId: 3, memberId: 2, isbn: "B004", borrowDate: new Date("2025-01-12"), returnDate: new Date("2025-01-22") },
+    { recordId: 4, memberId: 5, isbn: "B002", borrowDate: new Date("2025-01-13"), returnDate: new Date("2025-01-23") },
+    { recordId: 5, memberId: 4, isbn: "B005", borrowDate: new Date("2025-01-14"), returnDate: new Date("2025-01-24") },
+    { recordId: 6, memberId: 6, isbn: "B006", borrowDate: new Date("2025-01-15"), returnDate: new Date("2025-01-25") },
+    { recordId: 7, memberId: 8, isbn: "B007", borrowDate: new Date("2025-01-16"), returnDate: new Date("2025-01-26") },
+    { recordId: 8, memberId: 7, isbn: "B008", borrowDate: new Date("2025-01-17"), returnDate: new Date("2025-01-27") },
+    { recordId: 9, memberId: 9, isbn: "B009", borrowDate: new Date("2025-01-18"), returnDate: new Date("2025-01-28") },
+    { recordId: 10, memberId: 10, isbn: "B010", borrowDate: new Date("2025-01-19"), returnDate: new Date("2025-01-29") }
+])
+
+db.authors.insertMany([
+    { authorId: 1, name: "John Doe", country: "USA" },
+    { authorId: 2, name: "Jane Smith", country: "UK" },
+    { authorId: 3, name: "Robert Brown", country: "Canada" },
+    { authorId: 4, name: "Emily Davis", country: "Australia" },
+    { authorId: 5, name: "Michael Wilson", country: "USA" },
+    { authorId: 6, name: "Sarah Johnson", country: "India" },
+    { authorId: 7, name: "David Lee", country: "China" },
+    { authorId: 8, name: "Sophia Martinez", country: "Mexico" },
+    { authorId: 9, name: "Chris White", country: "Germany" },
+    { authorId: 10, name: "Linda Hall", country: "France" }
+])
+
+i.	Single-field index 
+db.books.createIndex({ isbn: 1 })
+
+ii.	Compound index
+db.borrowRecords.createIndex({ memberId: 1, borrowDate: -1 })
+
+iii.	Text index
+db.books.createIndex({ title: "text" })
+
+iv.	Unique index
+db.members.createIndex({ memberId: 1 }, { unique: true })
+
+
+d.	Without Index
+db.books.dropIndexes()
+db.books.find({ isbn: "B007" }).explain("executionStats")
+e.	With Index
+db.books.createIndex({ isbn: 1 })
+db.books.find({ isbn: "B007" }).explain("executionStats")
+
+i.	Find books by a specific author quickly
+// Create index on author for fast lookup
+db.books.createIndex({ author: 1 })
+
+// Query to find all books by "George Orwell"
+db.books.find({ author: "George Orwell" }).explain("executionStats")
+
+ii.	Search books by title keyword (text index)
+// Create text index on title
+db.books.createIndex({ title: "text" })
+
+// Search for books containing the word "Mockingbird"
+db.books.find({ $text: { $search: "Mockingbird" } }).explain("executionStats")
+
+iii.	Find overdue books efficiently
+// Create index on dueDate for borrowings
+db.borrowings.createIndex({ dueDate: 1 })
+
+// Find books that are overdue (before today)
+db.borrowings.find({ dueDate: { $lt: new Date() } }).explain("executionStats")
+
+iv.	Get borrowing history of a specific member, sorted by date
+// Create compound index for memberId and borrowDate
+db.borrowings.createIndex({ memberId: 1, borrowDate: -1 })
+
+// Find member's borrowing history
+db.borrowings.find({ memberId: 105 }).sort({ borrowDate: -1 }).explain("executionStats")
 
 
 
 
 
 
-4
+6.
+
+mkdir C:\MongoSharding
+cd C:\MongoSharding
+mkdir config
+mkdir shard1
+mkdir shard2
+mkdir shard3
+
+
+Open a new CMD window and run this command. Keep the window open:
+mongod --configsvr --replSet configRS --port 27021 --dbpath C:\MongoSharding\config --bind_ip localhost
+
+
+mongosh --port 27021
+
+rs.initiate({
+  _id: "configRS",
+  configsvr: true,
+  members: [ { _id: 0, host: "localhost:27021" } ]
+})
+Check the status and wait until the member becomes PRIMARY:
+rs.status()
+
+
+
+mongod --shardsvr --replSet shard1RS --port 27018 --dbpath C:\MongoSharding\shard1 --bind_ip localhost
+7.2 Shard 2
+mongod --shardsvr --replSet shard2RS --port 27019 --dbpath C:\MongoSharding\shard2 --bind_ip localhost
+
+
+mongosh --port 27018
+
+rs.initiate({
+  _id: "shard1RS",
+  members: [ { _id: 0, host: "localhost:27018" } ]
+})
+8.2 Shard 2
+mongosh --port 27019
+
+rs.initiate({
+  _id: "shard2RS",
+  members: [ { _id: 0, host: "localhost:27019" } ]
+})
+
+
+
+mongos --configdb configRS/localhost:27021 --port 27017 --bind_ip localhost
+Keep the router running. Open a new CMD window and connect to it:
+mongosh --port 27017
+
+
+sh.addShard("shard1RS/localhost:27018")
+sh.addShard("shard2RS/localhost:27019")
+sh.addShard("shard3RS/localhost:27020")
+Verify the registered shards:
+sh.status()
+
+
+sh.enableSharding("UniversityDB")
+use UniversityDB
+db.createCollection("Students")
+
+
+
+sh.shardCollection(
+  "UniversityDB.Students",
+  { student_id: "hashed" }
+)
+
+
+use UniversityDB
+
+db.Students.insertMany([
+  { student_id: 101, name: "Arun", department: "CSE" },
+  { student_id: 102, name: "Ravi", department: "ECE" },
+  { student_id: 103, name: "Anu", department: "ISE" },
+  { student_id: 104, name: "Priya", department: "CSE" },
+  { student_id: 105, name: "Kiran", department: "ECE" },
+  { student_id: 106, name: "Meena", department: "ISE" },
+  { student_id: 107, name: "Rahul", department: "CSE" },
+  { student_id: 108, name: "Divya", department: "ECE" },
+  { student_id: 109, name: "Sneha", department: "ISE" }
+])
+
+
+db.Students.find()
+db.Students.find({ student_id: 105 })
+
+
+
+
+15.1 Display cluster status
+sh.status()
+15.2 Display collection shard distribution
+db.Students.getShardDistribution()
+15.3 Display collection indexes
+db.Students.getIndexes()
+15.4 Examine query execution details
+db.Students.find({ student_id: 105 }).explain("executionStats")
+15.5 Count documents
+db.Students.countDocuments()
+
+
+
+
+
+
+
+7.
+import tkinter as tk
+from pymongo import MongoClient
+col = MongoClient("mongodb://localhost:27017/").collegeDB.students
+
+def insert():
+    col.insert_one({"name": e[0].get(), "roll": e[1].get(),
+                    "branch": e[2].get(), "cgpa": float(e[3].get())})
+    for x in e: x.delete(0, tk.END)
+
+def show():
+    t.delete("1.0", tk.END)
+    for s in col.find():
+        t.insert(tk.END, f"{s['name']} | {s['roll']} | {s['branch']} | {s['cgpa']}\n")
+
+a = tk.Tk()
+a.title("Student Database App")
+e = []
+
+tk.Label(a, text="Name").grid(row=0, column=0)
+x = tk.Entry(a)
+x.grid(row=0, column=1)
+e.append(x)
+
+tk.Label(a, text="Roll No").grid(row=1, column=0)
+x = tk.Entry(a)
+x.grid(row=1, column=1)
+e.append(x)
+
+tk.Label(a, text="Branch").grid(row=2, column=0)
+x = tk.Entry(a)
+x.grid(row=2, column=1)
+e.append(x)
+
+tk.Label(a, text="CGPA").grid(row=3, column=0)
+x = tk.Entry(a)
+x.grid(row=3, column=1)
+e.append(x)
+
+tk.Button(a, text="Insert Student", command=insert).grid(row=4, columnspan=2)
+tk.Button(a, text="Show All Students", command=show).grid(row=5, columnspan=2)
+t = tk.Text(a, width=50, height=10)
+t.grid(row=6, columnspan=2)
+a.mainloop()
